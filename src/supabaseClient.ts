@@ -1,14 +1,13 @@
-// src/supabaseClient.ts
 import { createClient } from '@supabase/supabase-js'
 
-// Citim variabilele de mediu (Vite necesită prefixul VITE_)
+// Read environment variables (Vite requires the VITE_ prefix)
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-// Verificăm dacă cheile sunt prezente
+// Verify if the keys are present in the environment
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase URL or ANON Key missing in environment variables. Check your .env file.')
 }
 
-// Inițializăm clientul și îl exportăm pentru a fi folosit în toată aplicația
+// Initialize the client and export it to be used throughout the application
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)

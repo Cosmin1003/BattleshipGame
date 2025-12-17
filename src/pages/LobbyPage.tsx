@@ -1,4 +1,3 @@
-// src/pages/LobbyPage.tsx
 import { useState } from "react";
 import { useSupabaseClient, useSession } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
@@ -12,14 +11,14 @@ const LobbyPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // 1. Apelare RPC pentru CREARE JOC
+  // 1. RPC Call to CREATE GAME
   const handleCreateGame = async () => {
     if (!session) return;
     setLoading(true);
     setMessage("");
 
     try {
-      // Apelăm funcția RPC 'rpc_create_game' din Supabase
+      // Call the 'rpc_create_game' function from Supabase
       const { data: newRoomCode, error } = await supabase.rpc(
         "rpc_create_game"
       );
@@ -28,19 +27,21 @@ const LobbyPage = () => {
         throw new Error(error.message);
       }
 
-      // Navigăm la pagina de joc
+      // Navigate to the game page
       navigate(`/game/${newRoomCode}`);
     } catch (err) {
-      // Verifică dacă eroarea este un obiect cu proprietatea message (comun)
+      // Check if error is an object with a message property (standard)
       if (err && typeof err === "object" && "message" in err) {
-        setMessage(`Eroare: ${err.message}`);
+        setMessage(`Error: ${err.message}`);
       } else {
-        setMessage("Eroare necunoscută la server.");
+        setMessage("Unknown server error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // 2. Apelare RPC pentru ADERARE LA JOC
+  // 2. RPC Call to JOIN GAME
   const handleJoinGame = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session || roomCode.length !== 4) return;
@@ -48,7 +49,7 @@ const LobbyPage = () => {
     setMessage("");
 
     try {
-      // Apelăm funcția RPC 'rpc_join_game' cu argumentul 'room_code'
+      // Call the 'rpc_join_game' function with the 'room_code' argument
       const { data: result, error } = await supabase.rpc("rpc_join_game", {
         room_code: roomCode.toUpperCase(),
       });
@@ -57,24 +58,25 @@ const LobbyPage = () => {
         throw new Error(error.message);
       }
 
-      // Funcția RPC returnează un string de stare (SUCCESS/ERROR/WARNING)
+      // The RPC returns a status string (SUCCESS/ERROR/WARNING)
       if (result.startsWith("ERROR")) {
         setMessage(result.replace("ERROR: ", ""));
       } else {
-        // Succes sau Warning (de exemplu: ești deja P1)
+        // Success or Warning (e.g., you are already Player 1)
         navigate(`/game/${roomCode.toUpperCase()}`);
       }
     } catch (err) {
-      // Verifică dacă eroarea este un obiect cu proprietatea message (comun)
       if (err && typeof err === "object" && "message" in err) {
-        setMessage(`Eroare: ${err.message}`);
+        setMessage(`Error: ${err.message}`);
       } else {
-        setMessage("Eroare necunoscută la server.");
+        setMessage("Unknown server error occurred.");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Functie de Logout
+  // Logout Function
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
@@ -90,7 +92,7 @@ const LobbyPage = () => {
         {/* User Info & Logout */}
         <div className="text-center mb-6">
           <p className="text-gray-300">
-            Logat ca:{" "}
+            Logged in as:{" "}
             <span className="font-semibold">{session?.user.email}</span>
           </p>
           <button
@@ -101,25 +103,25 @@ const LobbyPage = () => {
           </button>
         </div>
 
-        {/* 1. Creare Cameră */}
+        {/* 1. Create Room */}
         <div className="mb-8 border border-gray-700 p-4 rounded-lg">
-          <h2 className="text-2xl font-bold mb-4">1. Crează Joc Nou</h2>
+          <h2 className="text-2xl font-bold mb-4">1. Create New Game</h2>
           <button
             onClick={handleCreateGame}
             disabled={loading}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:bg-gray-600"
           >
-            {loading ? "Se creează..." : "Creează Cameră Privată"}
+            {loading ? "Creating..." : "Create Private Room"}
           </button>
         </div>
 
-        {/* 2. Aderare Cameră */}
+        {/* 2. Join Room */}
         <div className="border border-gray-700 p-4 rounded-lg">
-          <h2 className="text-2xl font-bold mb-4">2. Alătură-te unui Joc</h2>
+          <h2 className="text-2xl font-bold mb-4">2. Join a Game</h2>
           <form onSubmit={handleJoinGame} className="flex flex-col space-y-4">
             <input
               type="text"
-              placeholder="Introdu Cod Cameră (ex: C9ZL)"
+              placeholder="Enter Room Code (e.g., C9ZL)"
               value={roomCode}
               onChange={(e) =>
                 setRoomCode(e.target.value.toUpperCase().slice(0, 4))
@@ -133,16 +135,16 @@ const LobbyPage = () => {
               disabled={loading || roomCode.length !== 4}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition duration-300 disabled:bg-gray-600"
             >
-              {loading ? "Se alătură..." : "Alătură-te Jocului"}
+              {loading ? "Joining..." : "Join Game"}
             </button>
           </form>
         </div>
 
-        {/* Mesaje de stare */}
+        {/* Status Messages */}
         {message && (
           <p
             className={`mt-4 text-center font-semibold ${
-              message.startsWith("Eroare") ? "text-red-400" : "text-green-400"
+              message.startsWith("Error") ? "text-red-400" : "text-green-400"
             }`}
           >
             {message}

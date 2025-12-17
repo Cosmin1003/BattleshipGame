@@ -10,7 +10,7 @@ const LoginPage = () => {
   const supabase = useSupabaseClient(); 
   const navigate = useNavigate(); 
 
-  // Dacă utilizatorul este deja logat, navighează la pagina principală
+  // If the user is already logged in, navigate to the home page
   useEffect(() => {
     if (session) {
       navigate('/', { replace: true });
@@ -18,7 +18,11 @@ const LoginPage = () => {
   }, [session, navigate]);
 
   if (session) {
-    return <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">Redirecting...</div>; 
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+        Redirecting...
+      </div>
+    ); 
   }
 
   return (
