@@ -114,7 +114,7 @@ const GamePage = () => {
       !gameData.match_started ? (
         <ReadyView gameData={gameData} supabase={supabase} session={session!} />
       ) : gameData.all_placed ? (
-        <GameView gameData={gameData}/>
+        <GameView gameData={gameData} supabase={supabase} session={session!}/>
       ) : (
         /* 4. Altfel, rămânem în faza de plasare nave */
         <ShipPlacement

@@ -12,7 +12,7 @@ const SHIP_COLORS: Record<number, string> = {
 };
 
 const COMPLEX_SHAPE = [
-  [0, 0, 1, 0, 0],
+  [0, 0, 2, 0, 0],
   [1, 1, 1, 1, 1],
   [0, 0, 1, 0, 0],
   [0, 1, 1, 1, 0],
@@ -115,7 +115,7 @@ const ShipPlacement = ({ gameData, supabase, session }: ShipPlacementProps) => {
 
       for (let r = 0; r < height; r++) {
         for (let c = 0; c < width; c++) {
-          if (shape[r][c] === 1) {
+          if (shape[r][c] > 0) {
             const targetRow = row - rowOffset + r;
             const targetCol = col - colOffset + c;
             if (
@@ -125,7 +125,13 @@ const ShipPlacement = ({ gameData, supabase, session }: ShipPlacementProps) => {
               targetCol >= GRID_SIZE
             )
               return null;
-            coords.push(`${LETTERS[targetRow]}${targetCol + 1}`);
+            const coordString = `${LETTERS[targetRow]}${targetCol + 1}`;
+
+            if (shape[r][c] === 2) {
+              coords.unshift(coordString);
+            } else {
+              coords.push(coordString);
+            }
           }
         }
       }
@@ -163,12 +169,19 @@ const ShipPlacement = ({ gameData, supabase, session }: ShipPlacementProps) => {
       let possible = true;
       for (let r = 0; r < rShape.length; r++) {
         for (let c = 0; c < rShape[r].length; c++) {
-          if (rShape[r][c] === 1) {
+          if (rShape[r][c] > 0) {
             if (rRow + r >= GRID_SIZE || rCol + c >= GRID_SIZE) {
               possible = false;
               break;
             }
-            coords.push(`${LETTERS[rRow + r]}${rCol + c + 1}`);
+            const coordString = `${LETTERS[rRow + r]}${rCol + c + 1}`;
+
+            // LOGICA PENTRU VÂRF
+            if (rShape[r][c] === 2) {
+              coords.unshift(coordString);
+            } else {
+              coords.push(coordString);
+            }
           }
         }
         if (!possible) break;
@@ -359,7 +372,7 @@ const ShipPlacement = ({ gameData, supabase, session }: ShipPlacementProps) => {
           <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 flex-1">
             <div className="space-y-3">
               {[1, 2, 3].map((i) => {
-                const isDeployed = placedShips.some(s => s.id === i);
+                const isDeployed = placedShips.some((s) => s.id === i);
                 return (
                   <div
                     key={i}
