@@ -8,6 +8,7 @@ import {
 import WaitingView from "../components/game/WaitingView";
 import GameView from "../components/game/GameView";
 import ReadyView from "../components/game/ReadyView";
+import ShipPlacement from "../components/game/ShipPlacement";
 
 const GamePage = () => {
   const { gameId } = useParams<{ gameId: string }>();
@@ -112,9 +113,15 @@ const GamePage = () => {
       ) : /* 2. Dacă sunt ambii, dar n-au trecut de faza de Ready (match_started e false) */
       !gameData.match_started ? (
         <ReadyView gameData={gameData} supabase={supabase} session={session!} />
+      ) : gameData.all_placed ? (
+        <GameView gameData={gameData}/>
       ) : (
-        /* 3. Doar când match_started devine true, arătăm jocul */
-        <GameView gameData={gameData} />
+        /* 4. Altfel, rămânem în faza de plasare nave */
+        <ShipPlacement
+          gameData={gameData}
+          supabase={supabase}
+          session={session!}
+        />
       )}
     </div>
   );

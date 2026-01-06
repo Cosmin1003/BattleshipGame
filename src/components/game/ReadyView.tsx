@@ -59,7 +59,10 @@ const ReadyView = ({ gameData, supabase, session }: ReadyViewProps) => {
     if (isP1 && !gameData.match_started) {
       await supabase
         .from("games")
-        .update({ match_started: true })
+        .update({
+          match_started: true,
+          placement_started_at: new Date().toISOString(),
+        })
         .eq("id", gameData.id);
     }
   }, [isP1, gameData.id, gameData.match_started, supabase]);
