@@ -9,6 +9,7 @@ import WaitingView from "../components/game/WaitingView";
 import GameView from "../components/game/GameView";
 import ReadyView from "../components/game/ReadyView";
 import ShipPlacement from "../components/game/ShipPlacement";
+import GameOverView from "../components/game/GameOverView";
 
 const GamePage = () => {
   const { gameId } = useParams<{ gameId: string }>();
@@ -107,16 +108,20 @@ const GamePage = () => {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-      {/* 1. Dacă nu a intrat încă al doilea jucător */}
-      {!gameData.player_2_id ? (
+      {/* 0. Dacă jocul s-a terminat (Prioritate maximă) */}
+      {gameData.state === "Finished" ? (
+        <GameOverView gameData={gameData} session={session!} />
+      ) : /* 1. Dacă nu a intrat încă al doilea jucător */
+      !gameData.player_2_id ? (
         <WaitingView gameId={gameId!} gameData={gameData} supabase={supabase} />
-      ) : /* 2. Dacă sunt ambii, dar n-au trecut de faza de Ready (match_started e false) */
+      ) : /* 2. Dacă sunt ambii, dar n-au trecut de faza de Ready */
       !gameData.match_started ? (
         <ReadyView gameData={gameData} supabase={supabase} session={session!} />
-      ) : gameData.all_placed ? (
-        <GameView gameData={gameData} supabase={supabase} session={session!}/>
+      ) : /* 3. Dacă navele sunt plasate, trecem la luptă */
+      gameData.all_placed ? (
+        <GameView gameData={gameData} supabase={supabase} session={session!} />
       ) : (
-        /* 4. Altfel, rămânem în faza de plasare nave */
+        /* 4. Altfel, suntem în faza de plasare nave */
         <ShipPlacement
           gameData={gameData}
           supabase={supabase}
