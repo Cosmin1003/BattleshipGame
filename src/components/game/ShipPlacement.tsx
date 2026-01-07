@@ -68,19 +68,42 @@ const ShipPlacement = ({ gameData, supabase, session }: ShipPlacementProps) => {
 
   const toggleReadySignal = async () => {
     if (placedShips.length !== 3) return;
+
     const field = isP1 ? "p1_placed_ready" : "p2_placed_ready";
+    const nextReadyStatus = !myReady;
+
+    // 1. Dacă jucătorul dă CONFIRM (devine ready)
+    if (nextReadyStatus) {
+      // Încărcăm navele PRIMA DATĂ
+      const { error: uploadError } = await supabase.from("placements").upsert(
+        {
+          game_id: gameData.id,
+          user_id: session?.user.id,
+          ships_data: placedShips,
+          is_ready: true,
+        },
+        { onConflict: "game_id,user_id" }
+      ); // Folosește upsert pentru a evita duplicatele
+
+      if (uploadError) {
+        console.error("Eroare la salvarea navelor:", uploadError);
+        return;
+      }
+    }
+
+    // 2. Abia după ce navele sunt în DB, actualizăm starea de "Ready" în tabelul games
+    const opponentField = isP1 ? "p2_placed_ready" : "p1_placed_ready";
+    const isOpponentReady = gameData[opponentField];
 
     await supabase
       .from("games")
-      .update({ [field]: !myReady })
+      .update({
+        [field]: nextReadyStatus,
+        // Dacă și oponentul e gata, marcăm jocul ca început
+        all_placed: nextReadyStatus && isOpponentReady,
+      })
       .eq("id", gameData.id);
   };
-
-  useEffect(() => {
-    if (gameData.all_placed && !hasSubmitted.current) {
-      handleFinalUpload(placedShips);
-    }
-  }, [gameData.all_placed, handleFinalUpload, placedShips]);
 
   const rotateShape = useCallback(() => {
     setCurrentShape((prev) => {
@@ -223,7 +246,7 @@ const ShipPlacement = ({ gameData, supabase, session }: ShipPlacementProps) => {
     const updateTimer = () => {
       const now = new Date().getTime();
       const secondsPassed = Math.floor((now - startTime) / 1000);
-      const remaining = Math.max(0, 10 - secondsPassed);
+      const remaining = Math.max(0, 60 - secondsPassed);
       setTimeLeft(remaining);
       if (remaining === 0 && !hasSubmitted.current) {
         handleAutoPlace();
