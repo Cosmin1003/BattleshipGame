@@ -22,6 +22,11 @@ const GameView = ({ gameData, supabase, session }: GameViewProps) => {
 
   const isMyTurn = session.user.id === gameData.current_turn_id;
 
+  // Helper pentru a identifica player-ul în log
+  const getPlayerLabel = (shooterId: string) => {
+    return shooterId === session.user.id ? "You" : "Enemy";
+  };
+
   const attack = useCallback(
     async (coord: string) => {
       if (!isMyTurn) return;
@@ -73,7 +78,8 @@ const GameView = ({ gameData, supabase, session }: GameViewProps) => {
       const { data: moveData } = await supabase
         .from("moves")
         .select("*")
-        .eq("game_id", gameData.id);
+        .eq("game_id", gameData.id)
+        .order("created_at", { ascending: false }); // Sortate după cele mai noi
       if (moveData) setMoves(moveData);
     };
 
@@ -84,7 +90,7 @@ const GameView = ({ gameData, supabase, session }: GameViewProps) => {
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "moves", filter: `game_id=eq.${gameData.id}` },
-        (payload) => setMoves((prev) => [...prev, payload.new])
+        (payload) => setMoves((prev) => [payload.new, ...prev]) // Punem mutarea nouă la început
       )
       .subscribe();
 
@@ -144,7 +150,7 @@ const GameView = ({ gameData, supabase, session }: GameViewProps) => {
                     key={coord}
                     onClick={() => type === "enemy" && attack(coord)}
                     className={`w-10 h-10 border border-white/5 flex items-center justify-center transition-all
-                        ${type === "enemy" && isMyTurn ? "cursor-crosshair hover:bg-teal-500/20" : ""}
+                        ${type === "enemy" && isMyTurn && !myMove ? "cursor-crosshair hover:bg-teal-500/20" : ""}
                         ${type === "mine" && myShip ? `${SHIP_COLORS[myShip.id]} opacity-80` : ""}
                     `}
                     >
@@ -161,7 +167,8 @@ const GameView = ({ gameData, supabase, session }: GameViewProps) => {
 
   return (
     <div className="flex flex-col items-center gap-8 w-full animate-fadeIn p-4">
-      <div className="w-full max-w-4xl flex justify-between items-center bg-gray-800 p-6 rounded-xl border border-teal-500/30 shadow-2xl">
+      {/* Header Info */}
+      <div className="w-full max-w-6xl flex justify-between items-center bg-gray-800 p-6 rounded-xl border border-teal-500/30 shadow-2xl">
         <div>
           <h2 className={`text-2xl font-black italic uppercase tracking-widest ${isMyTurn ? "text-green-400" : "text-gray-500"}`}>
             {isMyTurn ? ">> Your Turn <<" : "Awaiting Enemy..."}
@@ -174,9 +181,42 @@ const GameView = ({ gameData, supabase, session }: GameViewProps) => {
           </div>
         </div>
       </div>
-      <div className="flex flex-wrap justify-center gap-10 w-full">
+
+      <div className="flex flex-wrap justify-center gap-6 w-full max-w-7xl items-start">
+        {/* Grila Mea */}
         {renderGrid("mine")}
+
+        {/* Grila Inamicului */}
         {renderGrid("enemy")}
+
+        {/* --- BATTLE LOG SECTION --- */}
+        <div className="w-64 bg-gray-900/50 border border-gray-700 rounded-xl p-4 self-stretch flex flex-col">
+          <h3 className="text-teal-500 font-bold text-xs uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+            Battle Log
+          </h3>
+          <div className="flex flex-col gap-2 overflow-y-auto max-h-[450px] pr-2 custom-scrollbar">
+            {moves.length === 0 && <p className="text-gray-600 text-xs italic">Waiting for first strike...</p>}
+            {moves.slice(0, 8).map((move, idx) => (
+              <div 
+                key={move.id || idx} 
+                className={`p-2 rounded border-l-2 text-[11px] font-mono leading-tight ${
+                  move.shooter_id === session.user.id ? "bg-blue-500/5 border-blue-500" : "bg-red-500/5 border-red-500"
+                }`}
+              >
+                <div className="flex justify-between mb-1">
+                  <span className="font-bold uppercase">{getPlayerLabel(move.shooter_id)}</span>
+                  <span className="text-gray-500">{move.target_coords}</span>
+                </div>
+                <div className={`font-bold ${
+                  move.outcome === 'miss' ? 'text-gray-400' : 'text-orange-400 italic'
+                }`}>
+                  {move.outcome?.toUpperCase() || 'PENDING...'}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
