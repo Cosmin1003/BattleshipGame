@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { Analytics } from '@vercel/analytics/react';
 import { supabase } from './supabaseClient';
 import { useState, useEffect } from 'react';
 import { type Session } from '@supabase/supabase-js';
@@ -47,6 +48,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      <Analytics />
     </SessionContextProvider>
   );
 }
