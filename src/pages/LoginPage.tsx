@@ -33,7 +33,7 @@ const LoginPage = () => {
           supabaseClient={supabase}
           appearance={{ theme: ThemeSupa }}
           theme="dark"
-          providers={['google', 'github']} 
+          providers={['google']} 
           redirectTo={`battleship-game-alpha.vercel.app`} 
           socialLayout="horizontal"
         />
