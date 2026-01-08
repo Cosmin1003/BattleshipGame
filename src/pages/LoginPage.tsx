@@ -34,7 +34,7 @@ const LoginPage = () => {
           appearance={{ theme: ThemeSupa }}
           theme="dark"
           providers={['google', 'github']} 
-          redirectTo={`${window.location.origin}/`} 
+          redirectTo={`battleship-game-alpha.vercel.app`} 
           socialLayout="horizontal"
         />
       </div>
